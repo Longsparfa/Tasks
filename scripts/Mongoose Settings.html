@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<!-- saved from url=(0027)http://127.0.0.1/__mg_admin -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Mongoose Settings</title>
+  
+  <style>
+    *, *:after, *:before {
+      -moz-box-sizing: border-box;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      outline: 0;
+    }
+    html, body { margin: 0; padding: 0 ; }
+    body, div, button, input { color: #777; }
+    a, button, .button { color: #69c; text-decoration: none; }
+    #content {
+      margin: 1em 3em auto; padding: 0 1em; background: #fff;
+      font: 14px Arial, sans-serif; font-weight: lighter;
+    }
+    fieldset { border: 1px solid #aaa; margin: 1em 0; border-radius: 0.4em; }
+    button, .button {
+      border: 1px solid transparent; color: #fff;
+      opacity: 0.75; font-size: 13px; border-radius: 0.4em; padding: 0.5em 2em;
+    }
+    input[type=text],input[type=password],input[type=checkbox] {
+      font-size: 90%; padding: 0.4em; color: #555; border: 1px solid #cccccc;
+      border-radius: 0.4em; width: 23em;
+    }
+    #save { background: #3f9531; }
+    #reset { background: #cc4648; }
+    #msg { background: #efe; margin: 0.5em 0; padding: 0.5em;
+        border: 1px solid #ccc; border-radius: 0.4em; }
+    .hidden { display: none; }
+    button:hover, .button:hover { opacity: 1; cursor: pointer; }
+    .setting { display: inline-block; width: 49%; }
+    #loading {
+      position: fixed; top: 0; left: 45%; padding: 0.2em 1em; z-index: 999;
+      color: white; background: #fbb117; font-weight: bold; display: none;
+    }
+    .param { display: inline-block; padding: 0.2em 0.5em; }
+    .param label {
+      min-width: 14em; padding: 0 1em; text-align: right; font-weight: bold;
+      display: inline-block;
+    }
+  </style>
+  <script>
+    var ajax = function(url, callback, post_data) {
+      var httpRequest = window.XMLHttpRequest ?
+        new XMLHttpRequest() :
+        new ActiveXObject("Microsoft.XMLHTTP");
+
+      httpRequest.onreadystatechange = function() {
+        if (httpRequest.readyState == 4) {
+          document.getElementById('loading').style.display = 'none';
+          try {
+            var obj = JSON.parse(httpRequest.responseText);
+            callback(obj);
+          } catch(e) {
+            console.log('Error fetching ' + url + ', response: [' +
+                        httpRequest.responseText + ']');
+          }
+          currentAjaxRequest = null;
+        }
+      };
+      httpRequest.open(post_data !== undefined ? 'POST' : 'GET', url, true);
+      httpRequest.send(post_data);
+      currentAjaxRequest = httpRequest;
+      document.getElementById('loading').style.display = 'block';
+    };
+
+    window.onload = function () {
+
+      function reloadSettings(showMessage) {
+        // Load configuration and update the UI
+        document.getElementById('settings').innerHTML = '';
+        ajax('?get_settings', function(settingsObj) {
+          config = settingsObj; // Remember configuration
+          var container = document.getElementById('settings');
+          var tmpl = document.getElementById('param_template');
+          for (var opt in settingsObj) {
+            var div = tmpl.cloneNode(true);
+            div.setAttribute('style', '');
+            div.childNodes[1].innerHTML = opt;
+            div.childNodes[3].setAttribute('id', opt);
+            div.childNodes[3].value = settingsObj[opt];
+            container.appendChild(div);
+          }
+        });
+        ajax('?get_cfg_file_status', function(obj) {
+          document.getElementById('cfg_path').innerHTML = obj.path;
+          document.getElementById('cfg_status').innerHTML = obj.exists ?
+            "(exists)" : "(does NOT exist)";
+        });
+        if (showMessage) {
+          document.getElementById('msg').setAttribute('class', '');
+        }
+      };
+      reloadSettings(false);
+
+      document.getElementById('reset').onclick = function() {
+        ajax('?reset', function() { reloadSettings(true); });
+      };
+
+      document.getElementById('save').onclick = function() {
+        var opts = [];
+        var inputs = document.getElementsByTagName('input');
+        for (var i = 0; i < inputs.length; i++) {
+          var el = inputs[i];
+          var id = el.getAttribute ? el.getAttribute('id') : null;
+          if (id) {
+            opts.push(id + '=' + (el.value || ''));
+          }
+        }
+        ajax('?save', function() {
+          reloadSettings(true);
+        }, opts.join('&'));
+      };
+    };
+  </script>
+</head>
+<body>
+<div id="loading" style="display: none;">Loading, please wait...</div>
+<div id="content">
+  <h1>Mongoose web server settings</h1>
+
+  <fieldset>
+    <legend>Current Settings</legend>
+    <div id="settings"><div class="param" style="" id="param_template">
+    <label>access_control_list</label>
+    <input type="text" id="access_control_list">
+  </div><div class="param" style="" id="param_template">
+    <label>access_log_file</label>
+    <input type="text" id="access_log_file">
+  </div><div class="param" style="" id="param_template">
+    <label>auth_domain</label>
+    <input type="text" id="auth_domain">
+  </div><div class="param" style="" id="param_template">
+    <label>cgi_interpreter</label>
+    <input type="text" id="cgi_interpreter">
+  </div><div class="param" style="" id="param_template">
+    <label>cgi_pattern</label>
+    <input type="text" id="cgi_pattern">
+  </div><div class="param" style="" id="param_template">
+    <label>dav_auth_file</label>
+    <input type="text" id="dav_auth_file">
+  </div><div class="param" style="" id="param_template">
+    <label>dav_root</label>
+    <input type="text" id="dav_root">
+  </div><div class="param" style="" id="param_template">
+    <label>debug</label>
+    <input type="text" id="debug">
+  </div><div class="param" style="" id="param_template">
+    <label>document_root</label>
+    <input type="text" id="document_root">
+  </div><div class="param" style="" id="param_template">
+    <label>enable_directory_listing</label>
+    <input type="text" id="enable_directory_listing">
+  </div><div class="param" style="" id="param_template">
+    <label>error_log_file</label>
+    <input type="text" id="error_log_file">
+  </div><div class="param" style="" id="param_template">
+    <label>extra_headers</label>
+    <input type="text" id="extra_headers">
+  </div><div class="param" style="" id="param_template">
+    <label>extra_mime_types</label>
+    <input type="text" id="extra_mime_types">
+  </div><div class="param" style="" id="param_template">
+    <label>global_auth_file</label>
+    <input type="text" id="global_auth_file">
+  </div><div class="param" style="" id="param_template">
+    <label>hide_files_patterns</label>
+    <input type="text" id="hide_files_patterns">
+  </div><div class="param" style="" id="param_template">
+    <label>hexdump_file</label>
+    <input type="text" id="hexdump_file">
+  </div><div class="param" style="" id="param_template">
+    <label>index_files</label>
+    <input type="text" id="index_files">
+  </div><div class="param" style="" id="param_template">
+    <label>listening_port</label>
+    <input type="text" id="listening_port">
+  </div><div class="param" style="" id="param_template">
+    <label>run_as_user</label>
+    <input type="text" id="run_as_user">
+  </div><div class="param" style="" id="param_template">
+    <label>ssi_pattern</label>
+    <input type="text" id="ssi_pattern">
+  </div><div class="param" style="" id="param_template">
+    <label>ssl_certificate</label>
+    <input type="text" id="ssl_certificate">
+  </div><div class="param" style="" id="param_template">
+    <label>ssl_ca_certificate</label>
+    <input type="text" id="ssl_ca_certificate">
+  </div><div class="param" style="" id="param_template">
+    <label>start_browser</label>
+    <input type="text" id="start_browser">
+  </div><div class="param" style="" id="param_template">
+    <label>url_rewrites</label>
+    <input type="text" id="url_rewrites">
+  </div></div>
+  </fieldset>
+
+  <div style="margin: 0.5em 0;">
+    Config file location: <code><span id="cfg_path">C:\Users\PARFA LONGS\Downloads\mongoose.conf</span></code>
+    <span id="cfg_status">(exists)</span></div>
+
+  <div id="msg" class="hidden">
+    Done. Please restart Mongoose.
+  </div>
+
+  <button id="reset">Reset Defaults</button>
+  <button id="save">Save Settings</button>
+
+  <span>&nbsp;&nbsp;
+    <a href="http://cesanta.com/developer/mongoose"> Documentation</a>
+    | <a href="https://cesanta.com/contact">Send Us Feedback</a>
+  </span>
+
+  <div class="param" style="display: none;" id="param_template">
+    <label></label>
+    <input type="text">
+  </div>
+
+</div>
+
+
+</body></html>
